@@ -1,0 +1,4 @@
+{
+    "address":"0xcf89c3167fbaf96950cebf57034825ec9e80e2161725221f9e1172cef5323bc5",
+    "secretKey":"suiprivkey1qruenkje9u337z023a2ufdkxts83s646wnll2ulj6qv0c3wx9vltyanhmgx"
+}

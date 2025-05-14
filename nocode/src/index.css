@@ -1,0 +1,8 @@
+/* src/index.css */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Import the App.css for global variables */
+@import './styles/App.css';

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunked Response Example</title>
+</head>
+<body>
+    <h1>Processing Data in Chunks</h1>
+    <div id="response"></div>
+
+    <script>
+        async function postRequest() {
+            // Make a POST request to the server
+            const response = await fetch('http://127.0.0.1:5000/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            // Stream the response in chunks
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let done = false;
+            let chunkIndex = 0;
+            let responseDiv = document.getElementById('response');
+
+            while (!done) {
+                const { value, done: readerDone } = await reader.read();
+                done = readerDone;
+                const chunk = decoder.decode(value, { stream: true });
+
+                // If the chunk is empty or null, terminate early
+                if (!chunk) {
+                    done = true;
+                    break;
+                }
+
+                // Only process non-empty chunks
+                chunkIndex++;
+                responseDiv.innerHTML += `<p>Chunk ${chunkIndex}: ${chunk}</p>`;
+            }
+        }
+
+        // Trigger the POST request when the page loads
+        postRequest();
+    </script>
+</body>
+</html>
