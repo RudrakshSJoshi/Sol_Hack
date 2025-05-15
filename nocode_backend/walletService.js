@@ -1,108 +1,107 @@
-const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
-const { toB64 } = require('@mysten/sui.js/utils');
-const { SuiClient } = require('@mysten/sui.js/client');
-const { GraphQLClient, gql } = require('graphql-request');
-const { bech32 } = require('bech32');
+const { Connection, Keypair, PublicKey, clusterApiUrl, LAMPORTS_PER_SOL } = require('@solana/web3.js');
+const { getAssociatedTokenAddress } = require('@solana/spl-token');
+const bs58 = require('bs58');
 
-// Initialize Sui RPC client (optional)
-const suiClient = new SuiClient({
-  url: process.env.SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443',
-});
+// Force devnet connection
+const network = 'devnet';
+const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
 
-// GraphQL endpoint
-const GRAPHQL_ENDPOINT = 'https://sui-testnet.mystenlabs.com/graphql';
-const gqlClient = new GraphQLClient(GRAPHQL_ENDPOINT);
+// Devnet token addresses
+const DEVNET_TOKENS = {
+  USDC: new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'),
+  USDT: new PublicKey('EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS'),
+  SUI: new PublicKey('8Yv9Jz4z7BUHP68dzK5AAmUq1qR31PrjqV9VtXqM2GJo')
+};
 
-/**
- * Generate a Bech32-encoded password from a 33-byte extended public key
- * @param {Buffer} pubKeyBytes - 32-byte Ed25519 public key
- * @param {string} prefix - Bech32 prefix
- * @returns {string} Bech32 encoded string
- */
-function generateBech32FromPubKey(pubKeyBytes, prefix = 'pw') {
-  if (pubKeyBytes.length !== 32) {
-    throw new Error('Public key must be 32 bytes');
-  }
+const TOKENS = DEVNET_TOKENS;
 
-  // Append 0x00 to get 33-byte buffer
-  const extendedKey = Buffer.concat([pubKeyBytes, Buffer.from([0x00])]);
-  const words = bech32.toWords(extendedKey);
-  return bech32.encode(prefix, words);
-}
-
-/**
- * Generate a new Sui wallet
- * @returns {Object} Object containing wallet address, private key, and Bech32 password
- */
 function generateWallet() {
   try {
-   
-    const keypair = Ed25519Keypair.generate();
+    const keypair = Keypair.generate();
+    const address = keypair.publicKey.toString();
+    const secretKeyBase58 = bs58.encode(keypair.secretKey);
     
-    const address = keypair.getPublicKey().toSuiAddress()
-    console.log("Address: ",address);
-    const secretKey = keypair.getSecretKey();
     return {
       address,
-      privateKey: keypair,
-      secretKey:secretKey
-
-    }
+      publicKey: address,
+      keypair: {
+        publicKey: Array.from(keypair.publicKey.toBytes()),
+        secretKey: Array.from(keypair.secretKey)
+      },
+      secretKey: Array.from(keypair.secretKey),
+      secretKeyBase58: secretKeyBase58
+    };
   } catch (error) {
-    console.error('Error generating Sui wallet:', error);
+    console.error('Error generating wallet:', error);
     throw new Error('Failed to generate wallet: ' + error.message);
   }
 }
 
-/**
- * Get the balance of a Sui wallet using GraphQL
- * @param {string} address Wallet address
- * @returns {Object} Balance information
- */
 async function getWalletBalance(address) {
-  console.log("Address is: ", address);
   try {
-    const query = gql`
-      query GetWalletBalance($addr: String!) {
-        address(address: $addr) {
-          address
-          balance {
-            coinType {
-              repr
-            }
-            coinObjectCount
-            totalBalance
-          }
-          coins {
-            nodes {
-              contents {
-                type {
-                  repr
-                }
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    const variables = { addr: address };
-    const data = await gqlClient.request(query, variables);
-
+    const publicKey = new PublicKey(address);
+    const balance = await connection.getBalance(publicKey);
+    
     return {
-      address: data.address.address,
-      balance: data.address.balance.totalBalance,
-      coinType: data.address.balance.coinType.repr,
-      coinObjectCount: data.address.balance.coinObjectCount,
-      raw: data
+      address: address,
+      balanceInSol: balance / LAMPORTS_PER_SOL,
+      lamports: balance,
+      exists: (await connection.getAccountInfo(publicKey)) !== null
     };
   } catch (error) {
-    console.error('Error fetching wallet balance via GraphQL:', error);
-    throw new Error('Failed to fetch wallet balance: ' + error.message);
+    throw new Error('Failed to fetch balance: ' + error.message);
+  }
+}
+
+async function getTokenBalances(address) {
+  try {
+    const publicKey = new PublicKey(address);
+    const tokenBalances = {};
+    
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+      programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+    });
+    
+    for (const account of tokenAccounts.value) {
+      const mintAddress = account.account.data.parsed.info.mint;
+      const balance = account.account.data.parsed.info.tokenAmount;
+      
+      for (const [name, mint] of Object.entries(TOKENS)) {
+        if (mint.toString() === mintAddress) {
+          tokenBalances[name] = {
+            balance: balance.uiAmount,
+            decimals: balance.decimals
+          };
+        }
+      }
+    }
+    
+    return tokenBalances;
+  } catch (error) {
+    throw new Error('Failed to fetch token balances: ' + error.message);
+  }
+}
+
+function restoreWallet(secretKeyBase58) {
+  try {
+    const secretKey = bs58.decode(secretKeyBase58);
+    const keypair = Keypair.fromSecretKey(secretKey);
+    
+    return {
+      address: keypair.publicKey.toString(),
+      publicKey: keypair.publicKey.toString(),
+      secretKeyBase58: secretKeyBase58
+    };
+  } catch (error) {
+    throw new Error('Failed to restore wallet: ' + error.message);
   }
 }
 
 module.exports = {
   generateWallet,
-  getWalletBalance
+  getWalletBalance,
+  getTokenBalances,
+  restoreWallet,
+  connection,
+  TOKENS
 };
