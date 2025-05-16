@@ -1,39 +1,66 @@
-// All-in-one server.js with real price fetching - All endpoints using POST
+// Solana Trading Server with Real Mainnet Transactions
 const express = require('express');
 const {
   Connection,
   Keypair,
   PublicKey,
-  LAMPORTS_PER_SOL
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+  sendAndConfirmTransaction,
+  clusterApiUrl
 } = require('@solana/web3.js');
-const { getAssociatedTokenAddress } = require('@solana/spl-token');
+const {
+  Token,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+  createTransferInstruction,
+} = require('@solana/spl-token');
 const bs58 = require('bs58');
 const axios = require('axios');
+const cors = require('cors');
+const { Jupiter } = require('@jup-ag/core');
+const JSBI = require('jsbi'); // Used by Jupiter for big integers
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // ----- CONFIGURATION -----
-
-// Store the swap configuration and balances
-const swapConfig = {
-  sol: 0,        // Amount of SOL available for swaps
-  usdc: 0,       // Amount of USDC available for swaps
-  address: null, // Wallet address
-  privateKey: null // Wallet private key
-};
 
 // Constants
 const SOL_DECIMALS = 1e9;
 const USDC_DECIMALS = 1e6;
 const SOLSCAN_API_BASE = 'https://public-api.solscan.io/account/tokens?account=';
-const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+
+// Set up Solana connection - use mainnet
+const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
 // Token addresses
 const TOKENS = {
-  SOL: 'So11111111111111111111111111111111111111112',
-  USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+  SOL: 'So11111111111111111111111111111111111111112', // Native SOL wrapped token address
+  USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' // USDC token address
 };
+
+// Jupiter router configuration - used for token swaps
+let jupiterInstance = null;
+
+// Initialize Jupiter
+async function initializeJupiter() {
+  try {
+    jupiterInstance = await Jupiter.load({
+      connection,
+      cluster: 'mainnet-beta',
+      user: null // Will be set per transaction
+    });
+    console.log('Jupiter initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Jupiter:', error);
+    throw error;
+  }
+}
 
 // ----- PRICE SERVICE -----
 
@@ -146,6 +173,12 @@ function generateWallet() {
   };
 }
 
+// Get wallet keypair from private key
+function getKeypairFromPrivateKey(privateKey) {
+  const secretKey = bs58.decode(privateKey);
+  return Keypair.fromSecretKey(secretKey);
+}
+
 // Get native SOL balance
 async function getSolBalance(walletAddress) {
   try {
@@ -158,7 +191,7 @@ async function getSolBalance(walletAddress) {
   }
 }
 
-// Get token balance from Solscan API or directly from Solana
+// Get token balance
 async function getTokenBalance(walletAddress, tokenMint) {
   try {
     // For SOL, use direct balance check
@@ -166,37 +199,22 @@ async function getTokenBalance(walletAddress, tokenMint) {
       return await getSolBalance(walletAddress);
     }
 
-    // For other tokens, first try Solscan API
-    try {
-      const url = `${SOLSCAN_API_BASE}${walletAddress}`;
-      const response = await axios.get(url);
-      if (response.data && Array.isArray(response.data)) {
-        const tokenAccount = response.data.find(t => t.tokenAddress === tokenMint);
-        if (tokenAccount) {
-          return tokenAccount.tokenAmount.uiAmount;
-        }
-      }
-    } catch (solscanError) {
-      console.warn(`Solscan API error: ${solscanError.message}`);
-    }
+    // Try to get associated token account
+    const publicKey = new PublicKey(walletAddress);
+    const tokenMintPublicKey = new PublicKey(tokenMint);
+    const tokenAccount = await getAssociatedTokenAddress(
+      tokenMintPublicKey,
+      publicKey
+    );
 
-    // Fallback to direct token account query
     try {
-      const publicKey = new PublicKey(walletAddress);
-      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-        publicKey,
-        { mint: new PublicKey(tokenMint) }
-      );
-
-      if (tokenAccounts.value.length > 0) {
-        const balance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-        return balance;
-      }
+      const accountInfo = await connection.getTokenAccountBalance(tokenAccount);
+      return accountInfo.value.uiAmount;
     } catch (error) {
-      console.warn(`Token account query error: ${error.message}`);
+      // Token account might not exist yet
+      console.warn(`Token account doesn't exist or is not initialized: ${error.message}`);
+      return 0;
     }
-
-    return 0;
   } catch (error) {
     console.error(`Failed to fetch balance for ${tokenMint}:`, error.message);
     return 0;
@@ -222,18 +240,120 @@ async function getBalances(address) {
   }
 }
 
+// Execute swap using Jupiter aggregator
+async function executeSwap(privateKey, action, amount) {
+  try {
+    if (!jupiterInstance) {
+      await initializeJupiter();
+    }
+
+    // Get keypair from private key
+    const keypair = getKeypairFromPrivateKey(privateKey);
+    
+    // Define input and output tokens based on the action
+    const inputMint = action === 'buy' 
+      ? new PublicKey(TOKENS.USDC) 
+      : new PublicKey(TOKENS.SOL);
+    
+    const outputMint = action === 'buy' 
+      ? new PublicKey(TOKENS.SOL) 
+      : new PublicKey(TOKENS.USDC);
+    
+    // Convert amount to the correct format with decimals
+    const inputDecimals = action === 'buy' ? USDC_DECIMALS : SOL_DECIMALS;
+    const amountInLamports = Math.floor(amount * inputDecimals).toString();
+    
+    console.log(`Executing ${action.toUpperCase()} swap: ${amount} ${action === 'buy' ? 'USDC → SOL' : 'SOL → USDC'}`);
+
+    // Find routes
+    const routes = await jupiterInstance.computeRoutes({
+      inputMint,
+      outputMint,
+      amount: JSBI.BigInt(amountInLamports),
+      slippageBps: 50, // 0.5% slippage
+      forceFetch: true
+    });
+
+    if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
+      throw new Error('No routes found for swap');
+    }
+
+    // Select the best route
+    const bestRoute = routes.routesInfos[0];
+    console.log(`Best route found with outAmount: ${bestRoute.outAmount}`);
+
+    // Execute the swap
+    const { execute } = await jupiterInstance.exchange({
+      routeInfo: bestRoute,
+      userPublicKey: keypair.publicKey,
+      wrapUnwrapSOL: true
+    });
+
+    // Execute the transaction
+    const swapResult = await execute(
+      { wallet: keypair }, // Pass keypair as wallet for signing
+      connection
+    );
+
+    // Check result
+    if (!swapResult.txid) {
+      throw new Error('Swap transaction failed');
+    }
+
+    console.log(`Swap successful! Transaction ID: ${swapResult.txid}`);
+    
+    // Calculate output amount
+    const outputDecimals = action === 'buy' ? SOL_DECIMALS : USDC_DECIMALS;
+    const outAmount = parseFloat(bestRoute.outAmount) / outputDecimals;
+
+    return {
+      success: true,
+      inAmount: amount,
+      outAmount,
+      txId: swapResult.txid,
+      price: action === 'buy' ? priceService.getBuyPrice() : priceService.getSellPrice(),
+      priceImpact: bestRoute.priceImpactPct ? parseFloat(bestRoute.priceImpactPct) / 100 : 0.001, // Convert to decimal
+      fee: action === 'buy' 
+        ? (amount * 0.003).toFixed(6) // 0.3% fee
+        : ((outAmount * 0.003) / (1 - 0.003)).toFixed(6) // 0.3% fee
+    };
+  } catch (error) {
+    console.error(`Error executing ${action} swap:`, error);
+    throw new Error(`Swap failed: ${error.message}`);
+  }
+}
+
+// Airdrop SOL to a new wallet (for testing purposes)
+async function requestAirdrop(walletAddress, amount = 1) {
+  try {
+    const publicKey = new PublicKey(walletAddress);
+    const signature = await connection.requestAirdrop(
+      publicKey,
+      amount * LAMPORTS_PER_SOL
+    );
+    await connection.confirmTransaction(signature);
+    return true;
+  } catch (error) {
+    console.error('Error requesting airdrop:', error);
+    return false;
+  }
+}
+
 // ----- API ENDPOINTS -----
 
 // 1. Create Wallet
-app.post('/create-wallet', (req, res) => {
+app.post('/create-wallet', async (req, res) => {
   try {
     const newWallet = generateWallet();
     
-    // Store the wallet details in swapConfig
-    swapConfig.address = newWallet.address;
-    swapConfig.privateKey = newWallet.privateKey;
-    
-    res.json({ success: true, wallet: newWallet });
+    // Return the new wallet details
+    res.json({ 
+      success: true, 
+      wallet: {
+        address: newWallet.address,
+        privateKey: newWallet.privateKey
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -242,7 +362,7 @@ app.post('/create-wallet', (req, res) => {
 // 2. Check Balances
 app.post('/check-balances', async (req, res) => {
   try {
-    const address = req.body.address || swapConfig.address;
+    const { address } = req.body;
     if (!address) {
       return res.status(400).json({
         success: false,
@@ -251,46 +371,52 @@ app.post('/check-balances', async (req, res) => {
     }
     
     const balances = await getBalances(address);
-    res.json({ success: true, balances });
+    res.json({ 
+      success: true, 
+      balances 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 });
 
-// 3. Set Swap Configuration
-app.post('/set_swap', (req, res) => {
+// 3. Set initial balances for a wallet (fund it with Solana for testing)
+app.post('/set_swap', async (req, res) => {
   try {
-    const { sol, usdc, address, privateKey } = req.body;
+    const { sol, usdc, address } = req.body;
     
     // Validate inputs
-    if (sol === undefined || usdc === undefined) {
+    if (sol === undefined && usdc === undefined) {
       return res.status(400).json({
         success: false,
-        error: "Missing required parameters (sol, usdc)"
+        error: "Missing required parameters (sol or usdc)"
+      });
+    }
+
+    if (!address) {
+      return res.status(400).json({
+        success: false,
+        error: "Wallet address is required"
       });
     }
     
-    // Update the swap configuration
-    swapConfig.sol = parseFloat(sol) || 0;
-    swapConfig.usdc = parseFloat(usdc) || 0;
+    // Get current balances as a baseline
+    const currentBalances = await getBalances(address);
     
-    // Optionally update wallet if provided
-    if (address) swapConfig.address = address;
-    if (privateKey) swapConfig.privateKey = privateKey;
-    
-    console.log('Swap configuration updated:', {
-      sol: swapConfig.sol,
-      usdc: swapConfig.usdc,
-      address: swapConfig.address ? `${swapConfig.address.slice(0, 8)}...` : null
-    });
+    // Note: In a real environment, we'd transfer tokens here
+    // For this example, we're not actually modifying balances on blockchain
+    // In reality, users would need to fund their wallet through a proper exchange
     
     res.json({
       success: true,
-      message: "Swap configuration updated",
+      message: "Wallet info stored. Note: This doesn't actually fund your wallet. Use a real exchange for that.",
       config: {
-        sol: swapConfig.sol,
-        usdc: swapConfig.usdc,
-        address: swapConfig.address
+        sol: parseFloat(sol) || currentBalances.sol,
+        usdc: parseFloat(usdc) || currentBalances.usdc,
+        address: address
       }
     });
   } catch (error) {
@@ -298,14 +424,26 @@ app.post('/set_swap', (req, res) => {
   }
 });
 
-// 4. Fetch Pair - Changed to POST
-app.post('/fetch_pair', (req, res) => {
+// 4. Fetch wallet and price info
+app.post('/fetch_pair', async (req, res) => {
   try {
+    const { address } = req.body;
+    
+    if (!address) {
+      return res.status(400).json({
+        success: false,
+        error: "Wallet address is required"
+      });
+    }
+    
+    // Get current balances
+    const balances = await getBalances(address);
+
     res.json({
       success: true,
-      sol: swapConfig.sol,
-      usdc: swapConfig.usdc,
-      address: swapConfig.address,
+      sol: balances.sol,
+      usdc: balances.usdc,
+      address: address,
       currentPrice: priceService.getPrice()
     });
   } catch (error) {
@@ -313,7 +451,7 @@ app.post('/fetch_pair', (req, res) => {
   }
 });
 
-// 5. Get Current Price - Changed to POST
+// 5. Get Current Price
 app.post('/price', (req, res) => {
   try {
     const currentPrice = priceService.getPrice();
@@ -333,93 +471,62 @@ app.post('/price', (req, res) => {
   }
 });
 
-// 6. Perform Swap with minimal output
+// 6. Perform actual swap on Solana mainnet
 app.post('/swap', async (req, res) => {
   try {
-    const { action } = req.body; // 'buy' or 'sell'
+    const { action, privateKey, amount } = req.body;
     
-    // Validate that swap config is set up
-    if (!swapConfig.address || !swapConfig.privateKey) {
-      return res.status(400).json({
-        success: false,
-        error: "Wallet not configured. Call /create-wallet first."
-      });
-    }
-    
-    // Validate action
+    // Validate inputs
     if (!action || (action !== 'buy' && action !== 'sell')) {
       return res.status(400).json({
         success: false,
         error: "Invalid action. Must be 'buy' or 'sell'."
       });
     }
-    
-    if (action === 'buy') {
-      // BUY: Use all USDC to buy SOL
-      if (swapConfig.usdc <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: "No USDC available for swap. Set USDC amount using /set_swap."
-        });
-      }
-      
-      console.log(`Executing BUY: Using ${swapConfig.usdc} USDC to buy SOL`);
-      
-      // Get current price
-      const price = priceService.getBuyPrice();
-      const swapFeeRate = 0.003; // 0.3% swap fee
-      const inAmount = swapConfig.usdc;
-      const outAmount = inAmount / price * (1 - swapFeeRate);
-      const priceImpact = Math.min(inAmount / 5000, 0.05).toFixed(2); // 1% impact per 5000 USDC, max 5%
-      const fee = (inAmount * swapFeeRate).toFixed(2);
-      
-      // Update stored amounts (internally tracked but not shown in response)
-      swapConfig.usdc = 0;
-      swapConfig.sol += outAmount;
-      
-      // Return clean response
-      res.json({
-        success: true,
-        inAmount,
-        outAmount: parseFloat(outAmount.toFixed(4)),
-        price,
-        priceImpact: parseFloat(priceImpact),
-        fee: parseFloat(fee)
-      });
-      
-    } else {
-      // SELL: Sell all SOL to get USDC
-      if (swapConfig.sol <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: "No SOL available for swap. Set SOL amount using /set_swap."
-        });
-      }
-      
-      console.log(`Executing SELL: Selling ${swapConfig.sol} SOL for USDC`);
-      
-      // Get current price
-      const price = priceService.getSellPrice();
-      const swapFeeRate = 0.003; // 0.3% swap fee
-      const inAmount = swapConfig.sol;
-      const outAmount = inAmount * price * (1 - swapFeeRate);
-      const priceImpact = Math.min(inAmount / 100, 0.05).toFixed(2); // 1% impact per 100 SOL, max 5%
-      const fee = (outAmount * swapFeeRate / (1 - swapFeeRate)).toFixed(2);
-      
-      // Update stored amounts (internally tracked but not shown in response)
-      swapConfig.sol = 0;
-      swapConfig.usdc += outAmount;
-      
-      // Return clean response
-      res.json({
-        success: true,
-        inAmount,
-        outAmount: parseFloat(outAmount.toFixed(4)),
-        price,
-        priceImpact: parseFloat(priceImpact),
-        fee: parseFloat(fee)
+
+    if (!privateKey) {
+      return res.status(400).json({
+        success: false,
+        error: "Private key is required to sign transactions"
       });
     }
+
+    // Get keypair and check balances
+    const keypair = getKeypairFromPrivateKey(privateKey);
+    const address = keypair.publicKey.toString();
+    const balances = await getBalances(address);
+    
+    // Determine amount to swap if not specified
+    let swapAmount;
+    if (amount) {
+      swapAmount = parseFloat(amount);
+    } else {
+      // Use all available balance if amount not specified
+      swapAmount = action === 'buy' ? balances.usdc : balances.sol;
+    }
+    
+    // Check if user has enough balance
+    if ((action === 'buy' && balances.usdc < swapAmount) || 
+        (action === 'sell' && balances.sol < swapAmount)) {
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient ${action === 'buy' ? 'USDC' : 'SOL'} balance for swap`
+      });
+    }
+
+    // Check if amount is too small
+    if (swapAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: `${action === 'buy' ? 'USDC' : 'SOL'} amount must be greater than 0`
+      });
+    }
+    
+    // Execute the swap
+    const swapResult = await executeSwap(privateKey, action, swapAmount);
+    
+    // Return the result
+    res.json(swapResult);
   } catch (error) {
     console.error('Swap error:', error);
     res.status(500).json({
@@ -429,11 +536,47 @@ app.post('/swap', async (req, res) => {
   }
 });
 
+// 7. Airdrop SOL (for development/testing, works only on devnet/testnet)
+app.post('/airdrop', async (req, res) => {
+  try {
+    const { address, amount } = req.body;
+    
+    if (!address) {
+      return res.status(400).json({
+        success: false,
+        error: "Wallet address is required"
+      });
+    }
+    
+    // This will only work on devnet/testnet
+    const result = await requestAirdrop(address, amount || 1);
+    
+    if (result) {
+      res.json({
+        success: true,
+        message: `Airdropped ${amount || 1} SOL to ${address}`,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: "Airdrop failed. Note: Airdrops only work on devnet/testnet."
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ----- SERVER STARTUP -----
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Fetching initial SOL/USDC price...`);
+  console.log('Initializing Jupiter...');
+  await initializeJupiter().catch(err => {
+    console.error('Failed to initialize Jupiter:', err);
+    process.exit(1);
+  });
+  console.log('Fetching initial SOL/USDC price...');
 });
