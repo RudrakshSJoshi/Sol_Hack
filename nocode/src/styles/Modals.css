@@ -1,0 +1,206 @@
+/* src/styles/Modals.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirmation-modal {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  width: 450px;
+  max-width: 90%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.modal-header .buy-icon {
+  color: var(--success-color);
+  margin-right: 8px;
+}
+
+.modal-header .sell-icon {
+  color: var(--danger-color);
+  margin-right: 8px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+.price-info {
+  background-color: var(--bg-tertiary);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.current-price {
+  display: flex;
+  align-items: center;
+}
+
+.current-price svg {
+  font-size: 1.5rem;
+  margin-right: 15px;
+  color: var(--accent-primary);
+}
+
+.price-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.price-value {
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.trade-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label {
+  color: var(--text-secondary);
+}
+
+.detail-value {
+  font-weight: 500;
+}
+
+.trade-warning {
+  background-color: rgba(255, 159, 67, 0.1);
+  border-left: 3px solid #FF9F43;
+  padding: 12px 15px;
+  border-radius: 0 4px 4px 0;
+  margin-top: 20px;
+}
+
+.trade-warning p {
+  margin: 5px 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-btn {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.confirm-btn {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.buy-btn {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.buy-btn:hover {
+  background-color: rgba(45, 206, 137, 0.8);
+}
+
+.sell-btn {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.sell-btn:hover {
+  background-color: rgba(245, 54, 92, 0.8);
+}
+
+.confirm-btn:disabled, .cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Other modal types can be added here */
+
+/* Responsive styles */
+@media (max-width: 500px) {
+  .confirmation-modal {
+    width: 95%;
+  }
+  
+  .trade-details {
+    font-size: 0.9rem;
+  }
+  
+  .price-value {
+    font-size: 1.1rem;
+  }
+}

@@ -1,0 +1,74 @@
+{
+    "workflowId": "workflow-1747384519068",
+    "name": "haha",
+    "description": "Automated trading workflow for SUI tokens",
+    "nodes": [
+        {
+            "id": "startNode-1747384454618",
+            "type": "startNode",
+            "position": {
+                "x": -255,
+                "y": 255
+            },
+            "data": {}
+        },
+        {
+            "id": "agentNode-1747384458015",
+            "type": "agentNode",
+            "position": {
+                "x": 60,
+                "y": 195
+            },
+            "data": {
+                "name": "My sol agent",
+                "description": "Do according to given strategy"
+            }
+        },
+        {
+            "id": "strategyNode-1747384467896",
+            "type": "strategyNode",
+            "position": {
+                "x": 0,
+                "y": -60
+            },
+            "data": {
+                "strategyText": "Do random buy sell hold lets see what happens"
+            }
+        },
+        {
+            "id": "notificationNode-1747384474344",
+            "type": "notificationNode",
+            "position": {
+                "x": 615,
+                "y": 210
+            },
+            "data": {}
+        }
+    ],
+    "edges": [
+        {
+            "id": "reactflow__edge-startNode-1747384454618start-out-agentNode-1747384458015agent-in",
+            "source": "startNode-1747384454618",
+            "target": "agentNode-1747384458015",
+            "type": "smoothstep",
+            "sourceHandle": "start-out",
+            "targetHandle": "agent-in"
+        },
+        {
+            "id": "reactflow__edge-agentNode-1747384458015model-out-strategyNode-1747384467896strategy-in",
+            "source": "agentNode-1747384458015",
+            "target": "strategyNode-1747384467896",
+            "type": "smoothstep",
+            "sourceHandle": "model-out",
+            "targetHandle": "strategy-in"
+        },
+        {
+            "id": "reactflow__edge-agentNode-1747384458015agent-out-notificationNode-1747384474344notification-in",
+            "source": "agentNode-1747384458015",
+            "target": "notificationNode-1747384474344",
+            "type": "smoothstep",
+            "sourceHandle": "agent-out",
+            "targetHandle": "notification-in"
+        }
+    ]
+}
