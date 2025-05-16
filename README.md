@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="data/DeZer0FAI_LOGO.png" alt="DeZer0FAI Logo" width="250"/>
-</p>
+![DeZer0FAI Logo](data/DeZer0FAI_LOGO.png)
 
 <h1 align="center">De\Zer0\FAI</h1>
 
@@ -39,4 +37,3 @@ Let agents do the coding while you focus on execution.
 Stay tuned for docs, tutorials, and our official launch!
 
 ---
-
