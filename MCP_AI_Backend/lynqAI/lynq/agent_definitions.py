@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from dataclasses import dataclass
-from linq.tool_definitons import Tool
+from lynq.tool_definitons import Tool
 
 @dataclass
 class AgentConfig:

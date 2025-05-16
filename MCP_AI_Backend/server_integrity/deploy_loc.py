@@ -123,7 +123,7 @@ class SwapRequest(BaseModel):
     action: str
 
 # Function to call the /swap endpoint using requests
-def swap("decision"):
+def swap(decision):
     url = "http://localhost:5000/swap"
     
     # Prepare the payload for the swap request

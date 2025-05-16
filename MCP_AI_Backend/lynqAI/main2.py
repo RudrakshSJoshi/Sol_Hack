@@ -1,4 +1,4 @@
-from linq import *
+from lynq import *
 import asyncio
 
 api_key="enter_your_api_key"

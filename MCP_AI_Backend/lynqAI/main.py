@@ -1,4 +1,4 @@
-from linq import *
+from lynq import *
 import asyncio
 
 # ==================== TOOLS ====================

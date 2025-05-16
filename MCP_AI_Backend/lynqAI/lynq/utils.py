@@ -1,6 +1,6 @@
-from linq.tool_definitons import Tool
-from linq.agent_definitions import Agent
-from linq.prompts import get_prompt
+from lynq.tool_definitons import Tool
+from lynq.agent_definitions import Agent
+from lynq.prompts import get_prompt
 from groq import AsyncGroq
 
 def fetch_data(tool_name: str) -> dict:

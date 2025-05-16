@@ -1,4 +1,4 @@
-from linq import Tool, Agent, run_agent
+from lynq import Tool, Agent, run_agent
 import asyncio
 
 api_key="enter_your_api_key"

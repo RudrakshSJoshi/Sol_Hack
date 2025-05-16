@@ -1,5 +1,5 @@
 def get_prompt(agent: str, query: str = "", data: str = "") -> str:
-    from linq.utils import fetch_agent, fetch_data
+    from lynq.utils import fetch_agent, fetch_data
     if query == "":
         raise ValueError("Query cannot be empty")
 
