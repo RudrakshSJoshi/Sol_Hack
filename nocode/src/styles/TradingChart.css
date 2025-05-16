@@ -1,0 +1,304 @@
+/* src/styles/TradingChart.css */
+.trading-chart {
+  background-color: var(--secondary-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chart-header {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.chart-title {
+  display: flex;
+  align-items: center;
+}
+
+.chart-title svg {
+  margin-right: 8px;
+  font-size: 1.2rem;
+  color: var(--accent-primary);
+}
+
+.chart-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.chart-type-selector,
+.time-range-selector {
+  display: flex;
+  background-color: var(--tertiary-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.type-btn,
+.range-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.type-btn svg,
+.range-btn svg {
+  margin-right: 6px;
+}
+
+.type-btn:hover,
+.range-btn:hover {
+  color: var(--text-primary);
+}
+
+.type-btn.active,
+.range-btn.active {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.chart-wrapper {
+  flex: 1;
+  position: relative;
+  padding: 20px;
+  min-height: 300px;
+}
+
+.chart-visualization {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.chart-visualization svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-line {
+  transition: d 0.3s ease;
+}
+
+.chart-area {
+  transition: d 0.3s ease;
+}
+
+.trade-point {
+  cursor: pointer;
+  transition: r 0.2s ease;
+}
+
+.trade-point:hover {
+  r: 2.5;
+}
+
+.log-point {
+  cursor: pointer;
+}
+
+.chart-y-labels {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.y-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 2px 5px;
+  background-color: rgba(37, 37, 37, 0.7);
+  border-radius: 2px;
+}
+
+.chart-x-labels {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  padding: 0 30px;
+}
+
+.x-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 2px 5px;
+  background-color: rgba(37, 37, 37, 0.7);
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+
+.chart-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  padding: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-weight: 500;
+}
+
+.stat-value.positive {
+  color: var(--success-color);
+}
+
+.stat-value.negative {
+  color: var(--danger-color);
+}
+
+.buy-count {
+  color: var(--success-color);
+}
+
+.sell-count {
+  color: var(--danger-color);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 20px;
+  padding: 0 15px 15px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.legend-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.buy-marker {
+  background-color: var(--success-color);
+}
+
+.sell-marker {
+  background-color: var(--danger-color);
+}
+
+.decision-marker {
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.chart-disclaimer {
+  padding: 10px 15px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Tooltip for chart points */
+.chart-tooltip {
+  position: absolute;
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-width: 200px;
+}
+
+.tooltip-time {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.tooltip-price {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.tooltip-action {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.tooltip-action.buy {
+  color: var(--success-color);
+}
+
+.tooltip-action.sell {
+  color: var(--danger-color);
+}
+
+.tooltip-action svg {
+  margin-right: 5px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .chart-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .chart-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .chart-legend {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}

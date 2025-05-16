@@ -7,7 +7,8 @@
  */
 
 // Use your API base URL
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'http://localhost:8000';
+const TRADING_API_URL = 'http://localhost:5000';
 
 /**
  * Phase 1: Updates/prepares the agent with the flow configuration
@@ -80,23 +81,304 @@ export const updateAgentConfiguration = async (uid, walletAddress, code) => {
 };
 
 /**
- * Phase 2: Deploys/activates the agent on the blockchain (To be implemented)
- * @param {string} uid - The generated UID
- * @param {string} walletAddress - The connected wallet address
- * @param {object} deploymentData - Additional deployment data
+ * Deploy agent with trading parameters
+ * @param {string} uid - The agent UID
+ * @param {string} walletAddress - The wallet address
+ * @param {object} tradingSettings - Trading settings (profit, loss, risk)
  * @returns {Promise<{status: string, message?: string}>}
  */
-export const activateAgent = async (uid, walletAddress, deploymentData) => {
-  // TODO: Implement Phase 2 deployment/activation
-  console.log('Phase 2: Agent activation not yet implemented');
-  console.log('This will call the actual deployment endpoint with:', {
-    uid,
-    walletAddress,
-    deploymentData
-  });
-  
-  return {
-    status: 'pending',
-    message: 'Phase 2 deployment will be implemented later'
-  };
+export const deployAgent = async (uid, walletAddress, tradingSettings) => {
+  try {
+    const requestBody = {
+      uid: uid,
+      password: walletAddress,
+      profit: tradingSettings.profit,
+      loss: tradingSettings.loss,
+      risk: tradingSettings.risk
+    };
+    
+    console.log('=== DEPLOY AGENT ===');
+    console.log('URL:', `${API_BASE_URL}/deploy`);
+    console.log('Method:', 'POST');
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+    
+    const response = await fetch(`${API_BASE_URL}/deploy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Deploy error! Status: ${response.status}, Message: ${errorText}`);
+    }
+    
+    // The deploy endpoint returns a streaming response
+    // For simplicity, we'll just return a success message
+    return {
+      status: 'success',
+      message: 'Agent deployment initiated'
+    };
+  } catch (error) {
+    console.error('Error deploying agent:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to deploy agent'
+    };
+  }
+};
+
+/**
+ * Set initial trading amounts
+ * @param {number} initialAmount - Initial USDC amount
+ * @param {string} walletAddress - Optional wallet address
+ * @returns {Promise<{status: string, message?: string}>}
+ */
+export const setInitialTrading = async (initialAmount, walletAddress = null) => {
+  try {
+    const requestBody = {
+      sol: 0, // Start with 0 SOL
+      usdc: initialAmount, // Start with user-defined USDC
+    };
+    
+    // Add wallet address if provided
+    if (walletAddress) {
+      requestBody.address = walletAddress;
+    }
+    
+    console.log('=== SET INITIAL TRADING ===');
+    console.log('URL:', `${TRADING_API_URL}/set_swap`);
+    console.log('Method:', 'POST');
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+    
+    const response = await fetch(`${TRADING_API_URL}/set_swap`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Set trading error! Status: ${response.status}, Message: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      status: 'success',
+      data: data
+    };
+  } catch (error) {
+    console.error('Error setting initial trading amounts:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to set initial trading amounts'
+    };
+  }
+};
+
+/**
+ * Stop the running agent
+ * @param {string} uid - The agent UID
+ * @param {string} walletAddress - The wallet address
+ * @returns {Promise<{status: string, message?: string}>}
+ */
+export const stopAgent = async (uid, walletAddress) => {
+  try {
+    const requestBody = {
+      uid: uid,
+      password: walletAddress
+    };
+    
+    console.log('=== STOP AGENT ===');
+    console.log('URL:', `${API_BASE_URL}/stop_execution`);
+    console.log('Method:', 'POST');
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+    
+    const response = await fetch(`${API_BASE_URL}/stop_execution`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Stop agent error! Status: ${response.status}, Message: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      status: 'success',
+      message: data.message || 'Agent stopped successfully'
+    };
+  } catch (error) {
+    console.error('Error stopping agent:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to stop agent'
+    };
+  }
+};
+
+/**
+ * Fetch agent logs
+ * @param {string} uid - The agent UID
+ * @param {string} walletAddress - The wallet address
+ * @returns {Promise<{status: string, logs?: Array, message?: string}>}
+ */
+export const fetchAgentLogs = async (uid, walletAddress) => {
+  try {
+    const requestBody = {
+      uid: uid,
+      password: walletAddress
+    };
+    
+    const response = await fetch(`${API_BASE_URL}/fetch_logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Fetch logs error! Status: ${response.status}, Message: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      status: 'success',
+      logs: data.log || []
+    };
+  } catch (error) {
+    console.error('Error fetching agent logs:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to fetch agent logs'
+    };
+  }
+};
+
+/**
+ * Fetch current trading balances
+ * @param {string} walletAddress - Optional wallet address
+ * @returns {Promise<{status: string, balances?: object, message?: string}>}
+ */
+export const fetchTradingBalances = async (walletAddress = null) => {
+  try {
+    let requestBody = {};
+    
+    // Add wallet address if provided
+    if (walletAddress) {
+      requestBody.address = walletAddress;
+    }
+    
+    const response = await fetch(`${TRADING_API_URL}/check-balances`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Fetch balances error! Status: ${response.status}, Message: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      status: 'success',
+      balances: data.balances || { sol: 0, usdc: 0 }
+    };
+  } catch (error) {
+    console.error('Error fetching trading balances:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to fetch trading balances'
+    };
+  }
+};
+
+/**
+ * Fetch current pair status
+ * @returns {Promise<{status: string, data?: object, message?: string}>}
+ */
+export const fetchPairStatus = async () => {
+  try {
+    const response = await fetch(`${TRADING_API_URL}/fetch_pair`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Fetch pair error! Status: ${response.status}, Message: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      status: 'success',
+      data: data
+    };
+  } catch (error) {
+    console.error('Error fetching pair status:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to fetch pair status'
+    };
+  }
+};
+
+/**
+ * Fetch deployed agent data
+ * @param {string} walletAddress - The wallet address
+ * @returns {Promise<{status: string, data?: Array, message?: string}>}
+ */
+export const fetchAgentData = async (walletAddress) => {
+  try {
+    const requestBody = {
+      password: walletAddress
+    };
+    
+    const response = await fetch(`${API_BASE_URL}/fetch_data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Fetch agent data error! Status: ${response.status}, Message: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      status: 'success',
+      data: data.data || []
+    };
+  } catch (error) {
+    console.error('Error fetching agent data:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to fetch agent data'
+    };
+  }
 };

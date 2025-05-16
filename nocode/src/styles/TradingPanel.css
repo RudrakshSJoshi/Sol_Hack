@@ -1,0 +1,326 @@
+/* src/styles/TradingPanel.css */
+.trading-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.trading-section {
+  background-color: var(--secondary-bg);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.section-header h3 svg {
+  margin-right: 8px;
+}
+
+.section-content {
+  padding: 20px;
+}
+
+/* Wallet Section */
+.wallet-info {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.wallet-address {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background-color: var(--tertiary-bg);
+  border-radius: 6px;
+}
+
+.info-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.wallet-balances {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.balance-item {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background-color: var(--tertiary-bg);
+  border-radius: 6px;
+}
+
+.balance-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.balance-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.total-balance {
+  grid-column: 1 / -1;
+  border-top: 2px solid var(--accent-primary);
+}
+
+.profit-loss {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  background-color: var(--tertiary-bg);
+  border-radius: 6px;
+  margin-top: 5px;
+}
+
+.pl-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.pl-value {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.pl-value.positive {
+  color: var(--success-color);
+}
+
+.pl-value.negative {
+  color: var(--danger-color);
+}
+
+.wallet-create {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  text-align: center;
+}
+
+.create-wallet-btn {
+  background-color: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-wallet-btn:hover {
+  background-color: var(--accent-secondary);
+}
+
+/* Price Section */
+.price-display {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.current-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 15px;
+  background-color: var(--tertiary-bg);
+  border-radius: 6px;
+}
+
+.price-label {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+}
+
+.price-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.price-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.price-item {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background-color: var(--tertiary-bg);
+  border-radius: 6px;
+}
+
+.price-item-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.price-item-value {
+  font-weight: 500;
+}
+
+/* Trade Setup Section */
+.trade-amount-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 12px;
+  padding-right: 60px;
+  border: 1px solid var(--border-color);
+  background-color: var(--tertiary-bg);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.input-wrapper input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.input-suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.set-amount-btn {
+  background-color: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.set-amount-btn:hover {
+  background-color: var(--accent-secondary);
+}
+
+.trading-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.trade-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.trade-btn svg {
+  margin-right: 8px;
+}
+
+.buy-btn {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.buy-btn:hover {
+  background-color: rgba(45, 206, 137, 0.8);
+}
+
+.sell-btn {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.sell-btn:hover {
+  background-color: rgba(245, 54, 92, 0.8);
+}
+
+.trade-btn:disabled,
+.set-amount-btn:disabled,
+.create-wallet-btn:disabled {
+  background-color: var(--tertiary-bg);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* Error message */
+.error-message {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background-color: rgba(245, 54, 92, 0.1);
+  border-left: 3px solid var(--danger-color);
+  border-radius: 0 4px 4px 0;
+  margin-top: 10px;
+  color: var(--danger-color);
+}
+
+.error-message svg {
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .wallet-balances,
+  .price-details,
+  .trading-actions {
+    grid-template-columns: 1fr;
+  }
+}

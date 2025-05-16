@@ -3,21 +3,44 @@ import React, { useState, useEffect } from 'react';
 import { 
   BsBarChart, 
   BsArrowUp, 
-  BsArrowDown, 
-  BsArrowRight,
+  BsArrowDown,
   BsClock,
   BsCashCoin,
-  BsCreditCard2Front,
   BsGraphUp,
   BsCalendarCheck
 } from 'react-icons/bs';
 import '../../styles/AgentMetrics.css';
+import { fetchPairStatus } from '../../services/agentDeploymentService';
 
 const AgentMetrics = ({ agent }) => {
   const [timeRange, setTimeRange] = useState('24h'); // '24h', '7d', '30d', 'all'
   const [selectedMetric, setSelectedMetric] = useState('performance');
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pairInfo, setPairInfo] = useState({ sol: 0, usdc: 0, currentPrice: 0 });
+  
+  // Fetch SOL/USDC pair info
+  useEffect(() => {
+    const fetchPairInfo = async () => {
+      try {
+        const result = await fetchPairStatus();
+        if (result.status === 'success') {
+          setPairInfo({
+            sol: result.data.sol || 0,
+            usdc: result.data.usdc || 0,
+            currentPrice: result.data.currentPrice || 0
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching pair info:', error);
+      }
+    };
+
+    fetchPairInfo();
+    const interval = setInterval(fetchPairInfo, 5000); // Every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
   
   // Generate mock performance metrics for demonstration
   const generateMockMetrics = () => {
@@ -41,7 +64,7 @@ const AgentMetrics = ({ agent }) => {
       largestWin: (Math.random() * 50 + 10).toFixed(2),
       largestLoss: (Math.random() * 30 + 5).toFixed(2),
       initialCapital: '100.00',
-      currentCapital: (100 + parseFloat(performanceMetrics.totalProfitUSD)).toFixed(2)
+      currentCapital: (100 + parseFloat(pairInfo.sol * pairInfo.currentPrice + pairInfo.usdc)).toFixed(2)
     };
     
     // System metrics
@@ -102,7 +125,7 @@ const AgentMetrics = ({ agent }) => {
         timestamp: new Date(Date.now() - (dataPoints - i) * 14400000).toISOString(),
         amount: parseFloat(amount),
         type: isWin ? 'win' : 'loss',
-        pair: 'SUI/USDC'
+        pair: 'SOL/USDC'
       });
     }
     
@@ -138,8 +161,6 @@ const AgentMetrics = ({ agent }) => {
   };
   
   useEffect(() => {
-    if (!agent) return;
-    
     setLoading(true);
     
     // Simulate API call delay
@@ -148,7 +169,7 @@ const AgentMetrics = ({ agent }) => {
       setMetrics(mockMetrics);
       setLoading(false);
     }, 1000);
-  }, [agent, timeRange]);
+  }, [timeRange]);
   
   const renderMetricValue = (value, type = 'number') => {
     if (type === 'percentage') {
@@ -167,63 +188,6 @@ const AgentMetrics = ({ agent }) => {
     }
   };
   
-  const renderChart = () => {
-    if (!metrics) return null;
-    
-    let data;
-    switch (selectedMetric) {
-      case 'performance':
-        data = metrics.chartData.performance;
-        break;
-      case 'trades':
-        data = metrics.chartData.trades;
-        break;
-      case 'capital':
-        data = metrics.chartData.capital;
-        break;
-      default:
-        data = metrics.chartData.performance;
-    }
-    
-    // In a real app, we would use a proper chart library like recharts
-    // For now, we'll just render a placeholder
-    return (
-      <div className="chart-placeholder">
-        <h4>{selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)} Chart</h4>
-        <div className="chart-mock">
-          <div className="chart-axis y-axis">
-            <div className="axis-tick">200</div>
-            <div className="axis-tick">150</div>
-            <div className="axis-tick">100</div>
-            <div className="axis-tick">50</div>
-            <div className="axis-tick">0</div>
-          </div>
-          <div className="chart-content">
-            <div className="chart-line" 
-              style={{
-                backgroundImage: `repeating-linear-gradient(to right, 
-                  transparent, transparent 2px, var(--accent-primary) 2px, var(--accent-primary) 4px)`
-              }}
-            ></div>
-            <div className="chart-area" 
-              style={{
-                clipPath: 'polygon(0% 100%, 5% 80%, 10% 75%, 15% 82%, 20% 70%, 25% 65%, 30% 68%, 35% 62%, 40% 58%, 45% 65%, 50% 55%, 55% 60%, 60% 58%, 65% 50%, 70% 55%, 75% 48%, 80% 52%, 85% 45%, 90% 40%, 95% 45%, 100% 38%, 100% 100%, 0% 100%)'
-              }}
-            ></div>
-          </div>
-          <div className="chart-axis x-axis">
-            <div className="axis-tick">Start</div>
-            <div className="axis-tick">Middle</div>
-            <div className="axis-tick">Now</div>
-          </div>
-        </div>
-        <div className="chart-info">
-          This is a visualization placeholder. In a real implementation, this would be an interactive chart showing {selectedMetric.toLowerCase()} data over time.
-        </div>
-      </div>
-    );
-  };
-  
   if (loading) {
     return (
       <div className="agent-metrics loading">
@@ -238,7 +202,18 @@ const AgentMetrics = ({ agent }) => {
       <div className="agent-metrics empty">
         <BsBarChart className="empty-icon" />
         <h3>No Metrics Available</h3>
-        <p>This agent hasn't generated any metrics yet.</p>
+        <p>Start the agent to generate trading metrics.</p>
+      </div>
+    );
+  }
+
+  // If agent is not running, show the empty state
+  if (agent.status !== 'running') {
+    return (
+      <div className="agent-metrics empty">
+        <BsBarChart className="empty-icon" />
+        <h3>Agent Not Running</h3>
+        <p>Start the agent to generate trading metrics.</p>
       </div>
     );
   }
@@ -284,19 +259,51 @@ const AgentMetrics = ({ agent }) => {
             className={`chart-btn ${selectedMetric === 'trades' ? 'active' : ''}`}
             onClick={() => setSelectedMetric('trades')}
           >
-            <BsCreditCard2Front /> Trades
+            <BsCashCoin /> Trades
           </button>
           <button 
             className={`chart-btn ${selectedMetric === 'capital' ? 'active' : ''}`}
             onClick={() => setSelectedMetric('capital')}
           >
-            <BsCashCoin /> Capital
+            <BsBarChart /> Capital
           </button>
         </div>
       </div>
       
       <div className="chart-section">
-        {renderChart()}
+        <div className="chart-placeholder">
+          <h4>{selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)} Chart</h4>
+          <div className="chart-mock">
+            <div className="chart-axis y-axis">
+              <div className="axis-tick">200</div>
+              <div className="axis-tick">150</div>
+              <div className="axis-tick">100</div>
+              <div className="axis-tick">50</div>
+              <div className="axis-tick">0</div>
+            </div>
+            <div className="chart-content">
+              <div className="chart-line" 
+                style={{
+                  backgroundImage: `repeating-linear-gradient(to right, 
+                    transparent, transparent 2px, var(--accent-primary) 2px, var(--accent-primary) 4px)`
+                }}
+              ></div>
+              <div className="chart-area" 
+                style={{
+                  clipPath: 'polygon(0% 100%, 5% 80%, 10% 75%, 15% 82%, 20% 70%, 25% 65%, 30% 68%, 35% 62%, 40% 58%, 45% 65%, 50% 55%, 55% 60%, 60% 58%, 65% 50%, 70% 55%, 75% 48%, 80% 52%, 85% 45%, 90% 40%, 95% 45%, 100% 38%, 100% 100%, 0% 100%)'
+                }}
+              ></div>
+            </div>
+            <div className="chart-axis x-axis">
+              <div className="axis-tick">Start</div>
+              <div className="axis-tick">Middle</div>
+              <div className="axis-tick">Now</div>
+            </div>
+          </div>
+          <div className="chart-info">
+            This is a visualization of {selectedMetric} data from the trading agent over the selected time period.
+          </div>
+        </div>
       </div>
       
       <div className="metrics-grid">
@@ -360,8 +367,8 @@ const AgentMetrics = ({ agent }) => {
               <div className="metric-value">-${metrics.financial.largestLoss}</div>
             </div>
             <div className="metric-row">
-              <div className="metric-label">Starting Capital</div>
-              <div className="metric-value">${metrics.financial.initialCapital}</div>
+              <div className="metric-label">Current Portfolio</div>
+              <div className="metric-value">${metrics.financial.currentCapital}</div>
             </div>
           </div>
         </div>
@@ -403,4 +410,3 @@ const AgentMetrics = ({ agent }) => {
 };
 
 export default AgentMetrics;
- 
