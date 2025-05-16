@@ -133,23 +133,6 @@ Create an agent that analyzes market trends and sends notifications:
 - **On-Chain Security**: Transactions are secured by the SUI blockchain
 - **UID Protection**: Your agent's UID is password-protected by your wallet address
 
-## FAQ
-
-**Q: Do I need to know how to code to use DeFAI Agent Deployer?**  
-A: No, our platform is completely no-code. You can build sophisticated agents using just drag-and-drop.
-
-**Q: Is my wallet safe?**  
-A: Yes, we use standard wallet connection methods that never expose your private keys.
-
-**Q: How much does it cost to deploy an agent?**  
-A: The platform itself is free to use. You'll only pay the standard transaction fees on the SUI blockchain when deploying your agent.
-
-**Q: Can I modify my agent after deployment?**  
-A: Yes, you can update your agent's configuration at any time through the dashboard.
-
-**Q: What happens if the market becomes volatile?**  
-A: You can set risk parameters for your trading agents that will automatically limit their actions during high volatility.
-
 ## Project Structure
 
 The DeFAI Agent Deployer codebase is organized as follows:
