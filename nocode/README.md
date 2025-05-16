@@ -1,10 +1,10 @@
 # DeFAI Agent Deployer - No-Code AI Agent Builder
 
-![DeFAI Logo](./image1.png)
+![DeFAI Logo](./image1)
 
 ## Overview
 
-DeFAI Agent Deployer is a powerful no-code platform that enables users to create, deploy, and manage AI agents on the SOLANA blockchain. With an intuitive drag-and-drop interface, anyone can build sophisticated AI workflows without writing a single line of code, and deploy them as autonomous agents that can perform trading operations and other tasks on the SOLANA blockchain.
+DeFAI Agent Deployer is a powerful no-code platform that enables users to create, deploy, and manage AI agents on the SUI blockchain. With an intuitive drag-and-drop interface, anyone can build sophisticated AI workflows without writing a single line of code, and deploy them as autonomous agents that can perform trading operations and other tasks on the SUI blockchain.
 
 ## Features
 
@@ -25,7 +25,7 @@ DeFAI Agent Deployer is a powerful no-code platform that enables users to create
 
 ### Deployment & Management
 - **One-Click Deployment**: Deploy your agent to the SUI blockchain with a single click
-- **Wallet Integration**: Connect your Phantom wallet for secure deployment and transactions
+- **Wallet Integration**: Connect your SUI wallet for secure deployment and transactions
 - **Real-Time Monitoring**: Track agent performance, logs, and metrics in real-time
 - **Dashboard**: Manage all your agents from a central dashboard
 
@@ -39,12 +39,8 @@ DeFAI Agent Deployer is a powerful no-code platform that enables users to create
 
 ### Prerequisites
 - A modern web browser (Chrome, Firefox, Edge, etc.)
-- A SOLANA wallet (e.g., Phantom)
+- A SUI wallet (e.g., Sui Wallet browser extension)
 
-### Accessing the Platform
-1. Visit [defai-agent-deployer.com](https://defai-agent-deployer.com)
-2. Connect your SUI wallet using the "Connect Wallet" button
-3. Generate a UID by authenticating with your wallet
 
 ### Building Your First Agent
 
@@ -136,7 +132,23 @@ Create an agent that analyzes market trends and sends notifications:
 - **Data Privacy**: Your agent configurations are encrypted
 - **On-Chain Security**: Transactions are secured by the SUI blockchain
 - **UID Protection**: Your agent's UID is password-protected by your wallet address
-- 
+
+## FAQ
+
+**Q: Do I need to know how to code to use DeFAI Agent Deployer?**  
+A: No, our platform is completely no-code. You can build sophisticated agents using just drag-and-drop.
+
+**Q: Is my wallet safe?**  
+A: Yes, we use standard wallet connection methods that never expose your private keys.
+
+**Q: How much does it cost to deploy an agent?**  
+A: The platform itself is free to use. You'll only pay the standard transaction fees on the SUI blockchain when deploying your agent.
+
+**Q: Can I modify my agent after deployment?**  
+A: Yes, you can update your agent's configuration at any time through the dashboard.
+
+**Q: What happens if the market becomes volatile?**  
+A: You can set risk parameters for your trading agents that will automatically limit their actions during high volatility.
 
 ## Project Structure
 
