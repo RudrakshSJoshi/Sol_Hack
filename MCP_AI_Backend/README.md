@@ -310,7 +310,7 @@ Distributed under the **MIT License**. See [LICENSE](LICENSE) for full terms.
 [GitHub](https://github.com/PrateushSharma)  
 
 **Project Repository**:  
-[https://github.com/PrateushSharma/ZaZa](https://github.com/PrateushSharma/ZaZa)  
+[https://github.com/RudrakshSJoshi/Sol_Hack](https://github.com/RudrakshSJoshi/Sol_Hack)  
 
 ---
 
