@@ -197,7 +197,7 @@ async def spec_run():
 shutdown_event = threading.Event()
 
 # Function to start the WebSocket in a separate daemon thread
-def initiate_publisher(symbol="SUIUSDT"):
+def initiate_publisher(symbol="SOLUSDC"):
     def thread_target():
         try:
             start_binance_data_publisher(symbol=symbol, shutdown_event=shutdown_event)
@@ -240,7 +240,7 @@ if __name__ == "__main__":
         print("    Redis Docker Engine setup complete.")
         print("2.")
         print("    Starting Redis Publisher threads...")
-        initiate_publisher(symbol="SUIUSDT") # Uncomment this line to start the WebSocket data fetch
+        initiate_publisher(symbol="SOLUSDC") # Uncomment this line to start the WebSocket data fetch
         print("    Redis Publisher threads started.")
         # print("3.")
         # print("    Setting up Redis Subscriber threads...")

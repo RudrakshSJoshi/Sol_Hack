@@ -117,23 +117,18 @@ def ensure_json(wallet):
 # Define the Wallet and SwapRequest models using Pydantic
 class Wallet(BaseModel):
     address: str
-    privateKey: dict
-    secretKey: str
+    privateKey: str
 
 class SwapRequest(BaseModel):
-    wallet: Wallet
-    fromCoin: str
-    toCoin: str
+    action: str
 
 # Function to call the /swap endpoint using requests
-def swap(wallet, from_coin, to_coin):
+def swap("decision"):
     url = "http://localhost:5000/swap"
     
     # Prepare the payload for the swap request
     swap_request = SwapRequest(
-        wallet=wallet,  # Pass the wallet object
-        fromCoin=from_coin,
-        toCoin=to_coin
+        action=decision
     )
     
     # Convert the Pydantic model to a dictionary to send in the request
@@ -146,13 +141,13 @@ def swap(wallet, from_coin, to_coin):
 
         if response.status_code == 200 and response_json.get("success", False):
             print(f"Swap successful: {response_json}")
-            return response_json  # Return the response if success
+            return True  # Return the response if success
         else:
             print(f"Swap failed, no change in status. Error: {response_json}")
-            return None
+            return False
     except Exception as e:
         print(f"Error during swap request: {e}")
-        return None
+        return False
 
 def candle_generator(redis_host='localhost', redis_port=6379, channel='binance_data'):
     r = redis.Redis(host=redis_host, port=redis_port)
@@ -213,13 +208,20 @@ if __name__ == "__main__":
             decision = filter_decision(decision, data, risk_status)
             print(f"Filtered Decision: {decision}")
 
+            status_flag = ""
+
             if decision == "buy" and curr_status == "liq":
-                # Call swap from USDC to SUI (buy scenario)
-                print("Initiating swap from USDC to SUI...")
-                response = swap(wallet, "USDC", "SUI")
+                # Call swap from USDC to SOL (buy scenario)
+                print("Initiating swap from USDC to SOL...")
+                response = swap("buy")
                 if response: 
+                    print("Successfully acquired tokens")
                     curr_status = "tkn"  # Change status to token
+                    status_flag = "Successful"
                     decision = "buy"
+                if not response:
+                    status_flag = "Unsuccessful"
+                    print("Token acquisition failed, no change in status.")
             
             elif decision == "buy" and curr_status == "tkn":
                 # No action needed as already in tokens (tkn)
@@ -234,18 +236,23 @@ if __name__ == "__main__":
                 decision = "hold"
             
             elif decision == "sell" and curr_status == "tkn":
-                # Call swap from SUI to USDC (sell scenario)
-                print("Initiating swap from SUI to USDC...")
-                response = swap(wallet, "SUI", "USDC")
+                # Call swap from SOL to USDC (sell scenario)
+                print("Initiating swap from SOL to USDC...")
+                response = swap("sell")
                 if response: 
+                    print("Successfully sold tokens")
+                    status_flag = "Successful"
                     curr_status = "liq"  # Change status to liquidity
                     decision = "sell"
+                if not response:
+                    status_flag = "Unsuccessful"
+                    print("Token sale failed, no change in status.")
 
             print(f"Final Decision: {decision}")
 
             with open(log_file_path, 'a', encoding='utf-8') as f:
-                f.write(f"[FINAL DECISION] {decision.upper()} at {time.strftime('%Y-%m-%d %H:%M:%S')}\\n")
-                print(f"Logged decision: {decision}")
+                f.write(f"[FINAL DECISION] {decision.upper()} at {time.strftime('%Y-%m-%d %H:%M:%S')} -> Status: {status_flag}\\n")
+                print(f"Logged decision: {decision} -> Status: {status_flag}")
             
             with open(log_file_path, 'a', encoding='utf-8') as f:
                 f.write("="*100)

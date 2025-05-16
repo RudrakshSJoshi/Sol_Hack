@@ -10,8 +10,8 @@ redis_port = 6379         # Redis server port
 redis_channel = 'binance_data'  # Redis pub/sub channel name
 r = redis.Redis(host=redis_host, port=redis_port)
 
-# Function to fetch candlestick data for SUIUSDT
-def fetch_candlesticks(symbol="SUIUSDT", interval="1m", limit=500):
+# Function to fetch candlestick data for SOLUSDC
+def fetch_candlesticks(symbol="SOLUSDC", interval="1m", limit=500):
     url = "https://api.binance.com/api/v3/klines"
     params = {
         "symbol": symbol,
@@ -46,7 +46,7 @@ def check_shutdown_event(shutdown_event):
     return False
 
 # Function to fetch and publish data every minute
-def start_binance_data_publisher(symbol="SUIUSDT", shutdown_event=None):
+def start_binance_data_publisher(symbol="SOLUSDC", shutdown_event=None):
     iteration = 0
     print(f"        [INIT] -> 🚀 Starting Publisher on Redis Server")
 
