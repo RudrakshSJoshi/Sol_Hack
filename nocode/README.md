@@ -1,6 +1,6 @@
 # DeFAI Agent Deployer - No-Code AI Agent Builder
 
-![DeFAI Logo](./image1)
+![DeFAI Logo](./image1.png)
 
 ## Overview
 
