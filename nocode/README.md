@@ -228,3 +228,25 @@ src/
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# Contact 📬  
+**Rudraksh Sachin Joshi**  
+*(LEAD AI DEVELOPER)*  
+[GitHub](https://github.com/RudrakshSJoshi)  
+
+**Prateush Sharma**  
+*(LEAD BLOCKCHAIN DEVELOPER)*  
+[GitHub](https://github.com/PrateushSharma)  
+
+**Project Repository**:  
+[https://github.com/RudrakshSJoshi/Sol_Hack](https://github.com/RudrakshSJoshi/Sol_Hack)  
+
+---
+
+> **Warning**  
+> This system operates in high-frequency trading environments.  
+> Proper backtesting is mandatory before live deployment.
+
+---
+
+*"Empowering financial creativity through decentralized AI"* - RSJ and PS
