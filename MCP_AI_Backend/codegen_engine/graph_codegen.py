@@ -54,6 +54,10 @@ class ResponseFormat(BaseModel):
    - Use **only** `data['candlesticks'][index][key]` (e.g., `data['candlesticks'][-1]['close']`).  
    - Generate **`decision_to_buy_or_sell: str`** ("buy" or "sell" or "hold", nothing else).  
    - **NO** returns/prints/loops. Assume the code runs in a pre-existing loop.  
+   - **NO** print statements, that is already handled beforehand.
+   - The output must be a valid code segment.
+        - Do not use \\n characters for new lines in the response.
+        - Each line must appear on its own line in the output with proper indentation, just as it would in an actual .py file.
 
 4. **Dependencies**:  
    - **`requirements`**:  
