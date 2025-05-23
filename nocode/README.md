@@ -4,7 +4,7 @@
 
 ## Overview
 
-DeFAI Agent Deployer is a powerful no-code platform that enables users to create, deploy, and manage AI agents on the SUI blockchain. With an intuitive drag-and-drop interface, anyone can build sophisticated AI workflows without writing a single line of code, and deploy them as autonomous agents that can perform trading operations and other tasks on the SUI blockchain.
+DeFAI Agent Deployer is a powerful no-code platform that enables users to create, deploy, and manage AI agents on the SOLANA blockchain. With an intuitive drag-and-drop interface, anyone can build sophisticated AI workflows without writing a single line of code, and deploy them as autonomous agents that can perform trading operations and other tasks on the SOLANA blockchain.
 
 ## Features
 
@@ -24,8 +24,8 @@ DeFAI Agent Deployer is a powerful no-code platform that enables users to create
 - **Payment Node**: Handle on-chain transactions and payments
 
 ### Deployment & Management
-- **One-Click Deployment**: Deploy your agent to the SUI blockchain with a single click
-- **Wallet Integration**: Connect your SUI wallet for secure deployment and transactions
+- **One-Click Deployment**: Deploy your agent to the SOLANA blockchain with a single click
+- **Wallet Integration**: Connect your SOLANA wallet for secure deployment and transactions
 - **Real-Time Monitoring**: Track agent performance, logs, and metrics in real-time
 - **Dashboard**: Manage all your agents from a central dashboard
 
@@ -39,7 +39,7 @@ DeFAI Agent Deployer is a powerful no-code platform that enables users to create
 
 ### Prerequisites
 - A modern web browser (Chrome, Firefox, Edge, etc.)
-- A SUI wallet (e.g., Sui Wallet browser extension)
+- A SOLANA wallet (e.g., SOLANA Wallet browser extension)
 
 
 ### Building Your First Agent
@@ -130,7 +130,7 @@ Create an agent that analyzes market trends and sends notifications:
 
 - **Wallet Security**: We never store your private keys
 - **Data Privacy**: Your agent configurations are encrypted
-- **On-Chain Security**: Transactions are secured by the SUI blockchain
+- **On-Chain Security**: Transactions are secured by the SOLANA blockchain
 - **UID Protection**: Your agent's UID is password-protected by your wallet address
 
 ## Project Structure
@@ -178,7 +178,7 @@ src/
 ├── store/                   # State management (Zustand)
 │   ├── agentStore.js        # Agent state management
 │   ├── dashboardStore.js    # Dashboard state management
-│   └── solanaStore.js       # Solana/SUI trading state
+│   └── solanaStore.js       # Solana/SOLANA trading state
 │
 ├── styles/                  # CSS styles
 │   ├── AgentDetail.css
